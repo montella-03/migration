@@ -8,6 +8,8 @@ import org.springframework.web.client.RestClient;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.hibernate.internal.util.collections.ArrayHelper.forEach;
+
 @Service
 public class PostServiceImpl implements PostService{
     private final PostRepository postRepository;
@@ -24,15 +26,20 @@ public class PostServiceImpl implements PostService{
 
     @Override
     public List<PostDTO> savePosts() {
-        List<Post> posts = restClient
+        List<PostDTO> posts = restClient
                 .get()
                 .uri("/posts")
                 .retrieve()
-                .body(new ParameterizedTypeReference<List<Post>>() {
+                .body(new ParameterizedTypeReference<List<PostDTO>>() {
                 });
 
         assert posts != null;
-        postRepository.saveAll(posts);
+        posts.forEach(System.out::println);
+
+
+        posts.forEach(post -> {
+            postRepository.save(modelMapper.map(post, Post.class));
+        });
         return posts.stream()
                 .map(post -> {
                     return modelMapper.map(post, PostDTO.class);
@@ -41,7 +48,7 @@ public class PostServiceImpl implements PostService{
     }
 
     @Override
-    public PostDTO getPost(Long id) {
+    public PostDTO getPost(int id) {
         return postRepository.findById(id)
                 .map(post -> {
                     return modelMapper.map(post, PostDTO.class);
